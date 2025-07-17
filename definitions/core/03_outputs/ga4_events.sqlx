@@ -582,12 +582,9 @@ add_meta_info as (
     ) as is_measurement_protocol_hit,
 
     -- make session_id - can be NULL (if anonymous ping or MP hit without session_id)
-   farm_fingerprint(
-    CONCAT(
-        COALESCE(user_pseudo_id, '0'),
-        COALESCE(CAST(event_params.ga_session_id AS STRING), '0'),
-        COALESCE(CAST(time.event_timestamp AS STRING), '0')
-        )
+    COALESCE(
+    farm_fingerprint(user_pseudo_id || event_params.ga_session_id),
+    GENERATE_UUID()
     ) AS session_id
 
     -- all page information in a page struct
