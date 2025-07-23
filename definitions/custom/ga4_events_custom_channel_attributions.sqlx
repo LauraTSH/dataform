@@ -1,0 +1,121 @@
+config {
+    type: "incremental",
+    description: "An enriched version of the ga4_sessions table with a custom session channel grouping.",
+    bigquery: {
+        partitionBy: "session_date",
+        clusterBy: [ "session_id" ]
+    }
+}
+
+SELECT
+    -- Select all columns from the original ga4_sessions table
+    *,
+
+    LOWER(
+        CASE
+            WHEN s.last_non_direct_traffic_source.source IS NULL THEN 'Direct'
+
+            WHEN REGEXP_CONTAINS(
+                LOWER(s.last_non_direct_traffic_source.source),
+                'trivago-rate-connect|tripadvisor-tripconnect-cpc|google-hotel-ads-cpa|fastbooking-metagenius'
+            ) OR LOWER(s.last_non_direct_traffic_source.source_platform) = "hotelads"
+            THEN 'Metasearch'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.campaign), "demand")
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "demandgen")
+            THEN 'Display - Demand Gen'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.campaign), "pmax")
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "pmax")
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.campaign), 'cross-network')
+            THEN 'Paid Search - PMAX'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), "paid-video")
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "youtube_paid")
+            THEN 'Paid Video'
+
+            WHEN (REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source), "google|bing")
+                  OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), "cpc"))
+                  AND (REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.campaign), "brand")
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "brand"))
+            THEN 'Paid Search - Branded'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) = 'cpc' OR LOWER(s.last_non_direct_traffic_source.medium) = 'ppc'
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "generic")
+            THEN 'Paid Search - Generic'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) = 'app'
+                 OR LOWER(s.last_non_direct_traffic_source.campaign) = 'app-adoption'
+                 OR LOWER(s.last_non_direct_traffic_source.source) = 'app'
+            THEN 'App'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source), r'dv360|.*')
+                 AND (LOWER(s.last_non_direct_traffic_source.medium) = 'display'
+                      OR LOWER(s.last_non_direct_traffic_source.medium) = 'cpm'
+                      OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "display"))
+            THEN 'Display'
+
+            WHEN (REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source), r'linktr|facebook|instagram|linkedin')
+                  OR LOWER(s.last_non_direct_traffic_source.source) IN ('ig', 'fb')
+                  OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "organic"))
+                 AND (REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), "organic")
+                      OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), "organic-social")
+                      OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source_platform), "organic"))
+            THEN 'Organic Social'
+
+
+            WHEN REGEXP_CONTAINS(
+              LOWER(s.last_non_direct_traffic_source.source),
+              'ig|facebook|fb|instagram|linkedin|pinterest|tiktok|twitter|whatsapp'
+            )
+            AND REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), '^(.*cp.*|ppc|paid.*)$')
+            THEN 'Paid Social'
+
+            WHEN REGEXP_CONTAINS(
+              LOWER(s.last_non_direct_traffic_source.source),
+              'dailymotion|disneyplus|netflix|youtube|vimeo|twitch|vimeo|youtube'
+            )
+            OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), '^(.*video.*)$')
+            THEN 'Organic Video'
+
+            WHEN REGEXP_CONTAINS(
+              LOWER(s.last_non_direct_traffic_source.source),
+              'baidu|bing|duckduckgo|ecosia|google|yahoo|yandex'
+            )
+            OR LOWER(s.last_non_direct_traffic_source.medium) = 'organic'
+            OR LOWER(s.last_non_direct_traffic_source.source) = 'search.yahoo.com'
+            THEN 'Organic Search'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.source), 'email|e-mail|e_mail|e mail')
+                 OR REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), 'email|e-mail|e_mail|e mail')
+            THEN 'Email'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) = 'affiliate'
+            THEN 'Affiliates'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) IN ('referral', 'b2b2c')
+            THEN 'Referral'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.source) = '(direct)'
+            THEN 'Direct'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) = 'audio'
+            THEN 'Audio'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.medium) = 'sms'
+            THEN 'SMS'
+
+            WHEN REGEXP_CONTAINS(LOWER(s.last_non_direct_traffic_source.medium), 'mobile|notification')
+                 OR LOWER(s.last_non_direct_traffic_source.medium) LIKE '%push%'
+            THEN 'Mobile Push Notifications'
+
+            WHEN LOWER(s.last_non_direct_traffic_source.source) = 'offline'
+                 OR LOWER(s.last_non_direct_traffic_source.medium) = 'offline'
+            THEN 'Offline'
+
+            ELSE 'Unassigned'
+        END
+    ) AS custom_session_channel
+
+FROM
+    ${ref("ga4_sessions")} AS s
