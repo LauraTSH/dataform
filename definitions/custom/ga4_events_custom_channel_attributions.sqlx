@@ -10,7 +10,7 @@ config {
 }
 
 SELECT
-    -- Select all columns from the original ga4_sessions table
+    -- Select all columns from the original ga4_sessions table.
     *,
 
     LOWER(
