@@ -130,7 +130,7 @@ SELECT
             WHEN (REGEXP_CONTAINS(LOWER(session_campaign_name), 'globalaccount')) OR (REGEXP_CONTAINS(LOWER(session_medium), 'facebook|instagram') )
             THEN 'Paid Social'
 
-            WHEN (REGEXP_CONTAINS(LOWER(session_campaign_name), 'offline')
+            WHEN (REGEXP_CONTAINS(LOWER(session_campaign_name), 'offline'))
             THEN 'Offline'
 
             ELSE 'Unassigned'
