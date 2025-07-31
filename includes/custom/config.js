@@ -65,7 +65,75 @@ const customConfig = {
   //    { name: "event_value", type: "decimal" },
   //    { name: "event_value", type: "string", renameTo: "event_value_string" }
   // ],
-  CUSTOM_EVENT_PARAMS_ARRAY: [],
+  CUSTOM_EVENT_PARAMS_ARRAY: CUSTOM_EVENT_PARAMS_ARRAY: [
+	{ name: "product_group", type: "string", description: "(very low cardinality)" },
+	{ name: "page_language", type: "string", description: "(very low cardinality)" },
+	{ name: "checkout_step", type: "int", description: "" },
+	{ name: "checkout_step_name", type: "string", description: "(very low cardinality)" },
+	{ name: "step", type: "string", description: "(very low cardinality)" },
+	{ name: "booking_platform", type: "string", description: "(very low cardinality)" },
+	{ name: "property", type: "string", description: "(very low cardinality)" },
+	
+	{ name: "item_brand", type: "string", description: "(very low cardinality)" },
+	{ name: "exp_variant_string", type: "string", description: "(very low cardinality)" },
+	{ name: "location", type: "string", description: "(very high cardinality)" },
+	{ name: "gad_campaignid", type: "string", description: "(very low cardinality)" },
+	{ name: "exp_var", type: "int", description: "" },
+	{ name: "room_type", type: "string", description: "(very low cardinality)" },
+	{ name: "property_id", type: "string", description: "(very low cardinality)" },
+	{ name: "affiliation", type: "string", description: "(very low cardinality)" },
+	{ name: "exp_id", type: "string", description: "(very low cardinality)" },
+	{ name: "campaign_id", type: "string", description: "(very low cardinality)" },
+	{ name: "sfmc_journey_id", type: "string", description: "(very low cardinality)" },
+	{ name: "item_category", type: "string", description: "(very low cardinality)" },
+
+	{ name: "action", type: "string", description: "(very low cardinality)" },
+	{ name: "source_platform", type: "string", description: "(very low cardinality)" },
+	{ name: "event_action", type: "string", description: "(very high cardinality)" },
+	
+
+	{ name: "arrival_date", type: "string", description: "(very low cardinality)" },
+	
+	{ name: "form_field", type: "string", description: "(very low cardinality)" },
+	{ name: "event_category", type: "string", description: "(very low cardinality)" },
+	
+	{ name: "exp_event_act", type: "string", description: "(very low cardinality)" },
+	{ name: "button_text", type: "string", description: "(very low cardinality)" },
+	{ name: "menu_button_click", type: "string", description: "(very low cardinality)" },
+	{ name: "nights_qty", type: "decimal", description: "" },
+	{ name: "time", type: "string", description: "(very low cardinality)" },
+	{ name: "social_link_url", type: "string", description: "(very low cardinality)" },
+	{ name: "variation_name", type: "string", description: "(very low cardinality)" },
+	{ name: "sfmc_journey_name", type: "string", description: "(very low cardinality)" },
+	{ name: "form_category", type: "string", description: "(very low cardinality)" },
+	
+	
+	
+	{ name: "item_list", type: "string", description: "(very low cardinality)" },
+	{ name: "event_label", type: "string", description: "(very low cardinality)" },
+	{ name: "guest_qty", type: "int", description: "" },
+	{ name: "step_name", type: "string", description: "(very low cardinality)" },
+	
+	{ name: "social_link_name", type: "string", description: "(very low cardinality)" },
+	{ name: "available_rooms", type: "int", description: "" },
+	{ name: "form_location", type: "string", description: "(very low cardinality)" },
+	{ name: "sfmc_activity_id", type: "string", description: "(very low cardinality)" },
+	{ name: "departure_date", type: "string", description: "(very low cardinality)" },
+	{ name: "promo_code", type: "string", description: "(very low cardinality)" },
+	
+	
+	{ name: "login_status", type: "string", description: "(very low cardinality)" },
+
+	{ name: "experiment_id", type: "int", description: "" },
+	
+	{ name: "item_variant", type: "string", description: "(very low cardinality)" },
+	
+	
+	
+	{ name: "langauge", type: "string", description: "(very low cardinality)" },
+	{ name: "exp_event_cat", type: "string", description: "(very low cardinality)" },
+	
+],
 
   // user properties
   // example:
