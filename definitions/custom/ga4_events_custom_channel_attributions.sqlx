@@ -118,16 +118,19 @@ SELECT
             WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Mailing|Newsletter|Welcome|EMAIL|Confirmation|nurturing|Reminder'))
             THEN 'Email'
 
-            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Brand' AND  'Local|Non Local'))
+            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Brand')
+            AND  REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Local|Non Local'))
             THEN 'Paid Search - Branded'
 
-            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Gen' and  'Local|Non Local'))
+            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Gen')
+            AND  REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'Local|Non Local'))
             THEN 'Paid Search - Generic'
 
             WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'googlehotelads|trivago|tripadvisor'))
             THEN 'Metasearch'
 
-            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'globalaccount')) OR (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.medium), 'facebook|instagram') )
+            WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'globalaccount'))
+            OR (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.medium), 'facebook|instagram') )
             THEN 'Paid Social'
 
             WHEN (REGEXP_CONTAINS(LOWER(s.fixed_traffic_source.campaign), 'offline'))
