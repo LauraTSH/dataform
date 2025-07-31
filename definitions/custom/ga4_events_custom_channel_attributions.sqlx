@@ -15,7 +15,6 @@ SELECT
 
     LOWER(
         CASE
-            WHEN s.fixed_traffic_source.source IS NULL THEN 'Direct'
 
             WHEN REGEXP_CONTAINS(
                 LOWER(s.fixed_traffic_source.source),
