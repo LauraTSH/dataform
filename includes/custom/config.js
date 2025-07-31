@@ -65,7 +65,7 @@ const customConfig = {
   //    { name: "event_value", type: "decimal" },
   //    { name: "event_value", type: "string", renameTo: "event_value_string" }
   // ],
-  CUSTOM_EVENT_PARAMS_ARRAY: CUSTOM_EVENT_PARAMS_ARRAY: [
+  CUSTOM_EVENT_PARAMS_ARRAY:  [
 	{ name: "product_group", type: "string", description: "(very low cardinality)" },
 	{ name: "page_language", type: "string", description: "(very low cardinality)" },
 	{ name: "checkout_step", type: "int", description: "" },
