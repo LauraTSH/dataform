@@ -5,7 +5,7 @@ config {
     description: "An enriched version of the ga4_events table with a custom session channel grouping.",
     bigquery: {
         partitionBy: "event_date",
-        clusterBy: [ "event_name", ""session_id" ]
+        clusterBy: [ "event_name", "session_id" ]
     }
 }
 
