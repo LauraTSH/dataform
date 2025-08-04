@@ -4,14 +4,15 @@ config {
     description: "Processed and enriched user journey data with custom channel groupings and checkout steps.",
     tags: ["custom", "processing", "outputs"],
     bigquery: {
-        partitionBy: "date"
+        partitionBy: "event_date"
     }
 }
 
 -- We will use a Common Table Expression (CTE) to read and prepare the raw data.
 WITH raw_data AS (
     SELECT
-        * EXCEPT(sessionSourceMedium),
+        * EXCEPT(sessionSourceMedium, date),
+        PARSE_DATE('%Y%m%d', date) AS event_date,
         -- Split the sessionSourceMedium column into separate source and medium columns
         TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(0)]) AS session_source,
         TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(1)]) AS session_medium

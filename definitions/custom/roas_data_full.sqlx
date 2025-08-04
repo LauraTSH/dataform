@@ -4,13 +4,14 @@ config {
     description: "Processed ROAS data",
     tags: ["custom", "processing", "outputs"],
     bigquery: {
-        partitionBy: "date"
+        partitionBy: "event_date"
     }
 }
 
 WITH raw_data AS (
     SELECT
-        * EXCEPT(sessionSourceMedium),
+        * EXCEPT(sessionSourceMedium, date),
+        PARSE_DATE('%Y%m%d', date) AS event_date,
         -- Split the sessionSourceMedium column into separate source and medium columns
         TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(0)]) AS session_source,
         TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(1)]) AS session_medium
