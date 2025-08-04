@@ -94,11 +94,11 @@ SELECT
     END AS checkout_step_name,
 
     -- Join to the external table to get the page title
-    lookup.page_title
+    page_title_lookup.page_title
 
 FROM
     raw_data AS raw
 LEFT JOIN
-    page_title_lookup AS lookup
+    page_title_lookup
 ON
-    raw.pagePath = lookup.page_path
+    raw.pagePath = page_title_lookup.page_path
