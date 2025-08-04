@@ -1,0 +1,51 @@
+config {
+    type: "table",
+    schema: dataform.projectConfig.vars.OUTPUTS_DATASET, -- Or use dataform.projectConfig.vars.OUTPUTS_DATASET
+    description: "Processed ROAS data",
+    tags: ["custom", "processing", "outputs"],
+    bigquery: {
+        partitionBy: "date"
+    }
+}
+
+-- We use a Common Table Expression (CTE) to read and prepare the raw data.
+WITH raw_data AS (
+    SELECT
+        * EXCEPT(sessionSourceMedium),
+        -- Split the sessionSourceMedium column into separate source and medium columns
+        TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(0)]) AS session_source,
+        TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(1)]) AS session_medium
+    FROM
+        `local-index-442313-n9.ga4_reporting_api.roas_data`
+)
+
+-- The final SELECT statement builds your new processed table.
+SELECT
+    *,
+
+    -- This is your custom channel grouping logic, translated from PySpark.
+    CASE
+        WHEN REGEXP_CONTAINS(LOWER(session_source), 'trivago-rate-connect|tripadvisor-tripconnect-cpc|google-hotel-ads-cpa|fastbooking-metagenius|googlefreebookinglink') THEN 'Metasearch'
+        WHEN REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "demandgen") THEN 'Display - Demand Gen'
+        WHEN REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "pmax") THEN 'Paid Search - PMAX'
+        WHEN REGEXP_CONTAINS(LOWER(session_medium), "paid-video") OR REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "youtube_paid") THEN 'Paid Video'
+        WHEN (REGEXP_CONTAINS(LOWER(session_source), "google|bing") OR REGEXP_CONTAINS(LOWER(session_medium), "cpc")) AND REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "brand") THEN 'Paid Search - Branded'
+        WHEN LOWER(session_medium) IN ('cpc', 'ppc') OR REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "generic") THEN 'Paid Search - Generic'
+        WHEN LOWER(session_medium) = 'app' OR LOWER(session_source) = 'app' THEN 'App'
+        WHEN REGEXP_CONTAINS(LOWER(session_source), r'dv360|.*') AND (LOWER(session_medium) IN ('display', 'cpm') OR REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "display")) THEN 'Display'
+        WHEN (REGEXP_CONTAINS(LOWER(session_source), r'linktr|facebook|instagram|linkedin') OR LOWER(session_source) IN ('ig', 'fb') OR REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "organic")) AND (REGEXP_CONTAINS(LOWER(session_medium), "organic|organic-social") OR REGEXP_CONTAINS(LOWER(sessionSourcePlatform), "organic")) THEN 'Organic Social'
+        WHEN REGEXP_CONTAINS(LOWER(session_source), 'ig|facebook|fb|instagram|linkedin|pinterest|tiktok|twitter|whatsapp|meta') AND REGEXP_CONTAINS(LOWER(session_medium), '^(.*cp.*|ppc|paid.*)$|social_paid') THEN 'Paid Social'
+        WHEN REGEXP_CONTAINS(LOWER(session_source), 'dailymotion|disneyplus|netflix|youtube|vimeo|twitch') OR REGEXP_CONTAINS(LOWER(session_medium), '^(.*video.*)$') THEN 'Organic Video'
+        WHEN REGEXP_CONTAINS(LOWER(session_source), 'baidu|bing|duckduckgo|ecosia|google|yahoo|yandex') OR LOWER(session_medium) = 'organic' OR LOWER(session_source) = 'search.yahoo.com' THEN 'Organic Search'
+        WHEN REGEXP_CONTAINS(LOWER(session_source), 'email|e-mail|e_mail|e mail|salesforce-sales-cloud|salesforce-marketing-cloud') OR REGEXP_CONTAINS(LOWER(session_medium), 'email|e-mail|e_mail|e mail|newsletter') THEN 'Email'
+        WHEN LOWER(session_medium) = 'affiliate' OR REGEXP_CONTAINS(LOWER(session_source), 'tradedoubler') THEN 'Affiliates'
+        WHEN LOWER(session_medium) IN ('referral', 'b2b2c', 'referral_paid') OR REGEXP_CONTAINS(LOWER(session_source), 'universit.*') THEN 'Referral'
+        WHEN LOWER(session_source) = '(direct)' THEN 'Direct'
+        WHEN LOWER(session_medium) = 'audio' THEN 'Audio'
+        WHEN LOWER(session_medium) = 'sms' THEN 'SMS'
+        WHEN REGEXP_CONTAINS(LOWER(session_medium), 'mobile|notification') OR LOWER(session_medium) LIKE '%push%' THEN 'Mobile Push Notifications'
+        WHEN LOWER(session_source) = 'offline' OR LOWER(session_medium) = 'offline' THEN 'Offline'
+        ELSE 'Unassigned'
+    END AS session_channel
+FROM
+    raw_data
