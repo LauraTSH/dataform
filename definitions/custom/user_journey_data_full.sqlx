@@ -54,42 +54,42 @@ SELECT
     END AS session_channel,
 
     CASE
-        WHEN raw.checkout_step = 4 AND CONTAINS_SUBSTR(raw.affiliation, 'hotel') THEN 'payment'
+        WHEN raw.checkout_step = '4' AND CONTAINS_SUBSTR(raw.affiliation, 'hotel') THEN 'payment'
         WHEN raw.affiliation = 'membership' THEN
             CASE
-                WHEN raw.checkout_step = 1 THEN 'choose_membership'
-                WHEN raw.checkout_step = 2 THEN 'choose_duration'
-                WHEN raw.checkout_step = 3 THEN 'summary'
-                WHEN raw.checkout_step = 4 THEN 'payment_details'
-                WHEN raw.checkout_step = 5 THEN 'purchase'
-                WHEN raw.checkout_step = 0 THEN 'location & dates'
-                WHEN raw.checkout_step = -1 THEN 'pre-checkout'
+                WHEN raw.checkout_step = '1' THEN 'choose_membership'
+                WHEN raw.checkout_step = '2' THEN 'choose_duration'
+                WHEN raw.checkout_step = '3' THEN 'summary'
+                WHEN raw.checkout_step = '4' THEN 'payment_details'
+                WHEN raw.checkout_step = '5' THEN 'purchase'
+                WHEN raw.checkout_step = '0' THEN 'location & dates'
+                WHEN raw.checkout_step = '-1' THEN 'pre-checkout'
                 ELSE 'sign up'
             END
         WHEN raw.affiliation = 'semester' THEN
             CASE
-                WHEN raw.checkout_step = 0 THEN 'location & dates'
-                WHEN raw.checkout_step = 1 THEN 'room selection'
-                WHEN raw.checkout_step = 2 THEN 'booking details'
-                WHEN raw.checkout_step = 3 THEN 'your address'
-                WHEN raw.checkout_step = 4 THEN 'emergency contact'
-                WHEN raw.checkout_step = 5 THEN 'upgrades and extras'
-                WHEN raw.checkout_step = 6 THEN 'payments billing'
-                WHEN raw.checkout_step = 7 THEN 'purchase'
+                WHEN raw.checkout_step = '0' THEN 'location & dates'
+                WHEN raw.checkout_step = '1' THEN 'room selection'
+                WHEN raw.checkout_step = '2' THEN 'booking details'
+                WHEN raw.checkout_step = '3' THEN 'your address'
+                WHEN raw.checkout_step = '4' THEN 'emergency contact'
+                WHEN raw.checkout_step = '5' THEN 'upgrades and extras'
+                WHEN raw.checkout_step = '6' THEN 'payments billing'
+                WHEN raw.checkout_step = '7' THEN 'purchase'
                 ELSE 'sign up'
             END
         WHEN CONTAINS_SUBSTR(raw.affiliation, 'hotel') THEN
             CASE
-                WHEN raw.checkout_step = 1 THEN 'Room selection'
-                WHEN raw.checkout_step = 2 THEN 'extra selection'
-                WHEN raw.checkout_step = 3 THEN 'summary'
-                WHEN raw.checkout_step = 4 THEN 'payment'
-                WHEN raw.checkout_step = 5 THEN 'purchase'
+                WHEN raw.checkout_step = '1' THEN 'Room selection'
+                WHEN raw.checkout_step = '2' THEN 'extra selection'
+                WHEN raw.checkout_step = '3' THEN 'summary'
+                WHEN raw.checkout_step = '4' THEN 'payment'
+                WHEN raw.checkout_step = '5' THEN 'purchase'
                 ELSE 'personal details'
             END
-        WHEN raw.checkout_step = 3 THEN 'summary'
-        WHEN raw.checkout_step = 4 THEN 'payment_details'
-        WHEN raw.checkout_step = -1 THEN 'pre-checkout'
+        WHEN raw.checkout_step = '3' THEN 'summary'
+        WHEN raw.checkout_step = '4' THEN 'payment_details'
+        WHEN raw.checkout_step = '-1' THEN 'pre-checkout'
         ELSE 'pre-checkout'
     END AS checkout_step_name,
 
