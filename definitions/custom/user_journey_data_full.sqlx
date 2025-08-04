@@ -1,0 +1,104 @@
+config {
+    type: "table",
+    schema: dataform.projectConfig.vars.OUTPUTS_DATASET,
+    description: "Processed and enriched user journey data with custom channel groupings and checkout steps.",
+    tags: ["custom", "processing", "outputs"],
+    bigquery: {
+        partitionBy: "date"
+    }
+}
+
+-- We will use a Common Table Expression (CTE) to read and prepare the raw data.
+WITH raw_data AS (
+    SELECT
+        * EXCEPT(sessionSourceMedium),
+        -- Split the sessionSourceMedium column into separate source and medium columns
+        TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(0)]) AS session_source,
+        TRIM(SPLIT(sessionSourceMedium, '/')[SAFE_OFFSET(1)]) AS session_medium
+    FROM
+        `local-index-442313-n9.ga4_reporting_api.user_journey_data`
+),
+
+page_title_lookup AS (
+    SELECT
+        string_field_0 AS page_path,
+        string_field_1 AS page_title
+    FROM
+        `local-index-442313-n9.ga4_reporting_api.page_title_mapping`
+)
+
+-- The final SELECT statement builds your new processed table.
+SELECT
+    raw.*,
+
+    CASE
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), 'trivago-rate-connect|tripadvisor-tripconnect-cpc|google-hotel-ads-cpa|fastbooking-metagenius|googlefreebookinglink') THEN 'Metasearch'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_medium), "paid-video") THEN 'Paid Video'
+        WHEN LOWER(raw.session_medium) IN ('cpc', 'ppc') THEN 'Paid Search - Generic'
+        WHEN LOWER(raw.session_medium) = 'app' OR LOWER(raw.session_source) = 'app' THEN 'App'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), r'dv360|.*') AND LOWER(raw.session_medium) IN ('display', 'cpm') THEN 'Display'
+        WHEN (REGEXP_CONTAINS(LOWER(raw.session_source), r'linktr|facebook|instagram|linkedin') OR LOWER(raw.session_source) IN ('ig', 'fb')) AND (REGEXP_CONTAINS(LOWER(raw.session_medium), "organic") OR REGEXP_CONTAINS(LOWER(raw.session_medium), "organic-social")) THEN 'Organic Social'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), 'ig|facebook|fb|instagram|linkedin|pinterest|tiktok|twitter|whatsapp|meta') AND REGEXP_CONTAINS(LOWER(raw.session_medium), '^(.*cp.*|ppc|paid.*)$|social_paid') THEN 'Paid Social'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), 'dailymotion|disneyplus|netflix|youtube|vimeo|twitch') OR REGEXP_CONTAINS(LOWER(raw.session_medium), '^(.*video.*)$') THEN 'Organic Video'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), 'baidu|bing|duckduckgo|ecosia|google|yahoo|yandex') OR LOWER(raw.session_medium) = 'organic' OR LOWER(raw.session_source) = 'search.yahoo.com' THEN 'Organic Search'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_source), 'email|e-mail|e_mail|e mail|salesforce-sales-cloud|salesforce-marketing-cloud') OR REGEXP_CONTAINS(LOWER(raw.session_medium), 'email|e-mail|e_mail|e mail|newsletter') THEN 'Email'
+        WHEN LOWER(raw.session_medium) = 'affiliate' OR REGEXP_CONTAINS(LOWER(raw.session_source), 'tradedoubler') THEN 'Affiliates'
+        WHEN LOWER(raw.session_medium) IN ('referral', 'b2b2c', 'referral_paid') OR REGEXP_CONTAINS(LOWER(raw.session_source), 'universit.*') THEN 'Referral'
+        WHEN LOWER(raw.session_source) = '(direct)' THEN 'Direct'
+        WHEN LOWER(raw.session_medium) = 'audio' THEN 'Audio'
+        WHEN LOWER(raw.session_medium) = 'sms' THEN 'SMS'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_medium), 'mobile|notification') OR LOWER(raw.session_medium) LIKE '%push%' THEN 'Mobile Push Notifications'
+        WHEN LOWER(raw.session_source) = 'offline' OR LOWER(raw.session_medium) = 'offline' THEN 'Offline'
+        WHEN REGEXP_CONTAINS(LOWER(raw.session_medium), 'facebook|instagram') THEN 'Paid Social'
+        ELSE 'Unassigned'
+    END AS session_channel,
+
+    CASE
+        WHEN raw.checkout_step = 4 AND CONTAINS_SUBSTR(raw.affiliation, 'hotel') THEN 'payment'
+        WHEN raw.affiliation = 'membership' THEN
+            CASE
+                WHEN raw.checkout_step = 1 THEN 'choose_membership'
+                WHEN raw.checkout_step = 2 THEN 'choose_duration'
+                WHEN raw.checkout_step = 3 THEN 'summary'
+                WHEN raw.checkout_step = 4 THEN 'payment_details'
+                WHEN raw.checkout_step = 5 THEN 'purchase'
+                WHEN raw.checkout_step = 0 THEN 'location & dates'
+                WHEN raw.checkout_step = -1 THEN 'pre-checkout'
+                ELSE 'sign up'
+            END
+        WHEN raw.affiliation = 'semester' THEN
+            CASE
+                WHEN raw.checkout_step = 0 THEN 'location & dates'
+                WHEN raw.checkout_step = 1 THEN 'room selection'
+                WHEN raw.checkout_step = 2 THEN 'booking details'
+                WHEN raw.checkout_step = 3 THEN 'your address'
+                WHEN raw.checkout_step = 4 THEN 'emergency contact'
+                WHEN raw.checkout_step = 5 THEN 'upgrades and extras'
+                WHEN raw.checkout_step = 6 THEN 'payments billing'
+                WHEN raw.checkout_step = 7 THEN 'purchase'
+                ELSE 'sign up'
+            END
+        WHEN CONTAINS_SUBSTR(raw.affiliation, 'hotel') THEN
+            CASE
+                WHEN raw.checkout_step = 1 THEN 'Room selection'
+                WHEN raw.checkout_step = 2 THEN 'extra selection'
+                WHEN raw.checkout_step = 3 THEN 'summary'
+                WHEN raw.checkout_step = 4 THEN 'payment'
+                WHEN raw.checkout_step = 5 THEN 'purchase'
+                ELSE 'personal details'
+            END
+        WHEN raw.checkout_step = 3 THEN 'summary'
+        WHEN raw.checkout_step = 4 THEN 'payment_details'
+        WHEN raw.checkout_step = -1 THEN 'pre-checkout'
+        ELSE 'pre-checkout'
+    END AS checkout_step_name,
+
+    -- Join to the external table to get the page title
+    lookup.page_title
+
+FROM
+    raw_data AS raw
+LEFT JOIN
+    page_title_lookup AS lookup
+ON
+    raw.pagePath = lookup.page_path
