@@ -3,7 +3,7 @@ config {
     schema: dataform.projectConfig.vars.OUTPUTS_DATASET,
     description: "A lean, flattened table of GA4 events with custom attributions",
     tags: ["custom", "outputs"],
-    dependencies: ["ga4_events_custom_channel_attributions"],
+    dependencies: ["ga4_events_custom_channel_attributions", "ga4_sessions"],
     bigquery: {
         partitionBy: {
             field: "event_date",
@@ -75,6 +75,15 @@ SELECT
     source.event_params.link_text,
     source.event_params.link_url
 
+    sessions.landing_page.landing_page_location,
+    sessions.landing_page.landing_page_path,
+    sessions.landing_page.landing_page_hostname
+
 FROM
     -- This ref() function tells Dataform to run this model AFTER the custom attribution table is built.
     ${ref("ga4_events_custom_channel_attributions")} AS source
+
+LEFT JOIN
+    ${ref("ga4_sessions")} AS sessions
+ON
+    source.session_id = sessions.session_id
