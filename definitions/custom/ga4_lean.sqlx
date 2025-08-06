@@ -84,6 +84,9 @@ FROM
     ${ref("ga4_events_custom_channel_attributions")} AS source
 
 LEFT JOIN
+    UNNEST(source.items) AS item
+
+LEFT JOIN
     ${ref("ga4_sessions")} AS sessions
 ON
     source.session_id = sessions.session_id
