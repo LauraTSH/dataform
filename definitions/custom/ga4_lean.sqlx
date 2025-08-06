@@ -49,10 +49,10 @@ SELECT
     source.device.web_info.hostname,
 
     -- Item Details (from the unnested items array)
-    item.item_name,
-    item.price AS item_price,
-    item.quantity AS item_quantity,
-    item.coupon AS item_coupon,
+    items.item_name,
+    items.price AS item_price,
+    items.quantity AS item_quantity,
+    items.coupon AS item_coupon,
 
     -- Custom Event Parameters
     source.event_params_custom.product_group,
