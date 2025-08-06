@@ -73,7 +73,7 @@ SELECT
 
     -- Standard Event Parameters
     source.event_params.link_text,
-    source.event_params.link_url
+    source.event_params.link_url,
 
     sessions.landing_page.landing_page_location,
     sessions.landing_page.landing_page_path,
