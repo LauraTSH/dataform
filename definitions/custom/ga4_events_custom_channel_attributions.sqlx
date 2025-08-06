@@ -1,8 +1,9 @@
 config {
-    type: "incremental",
+    type: "table",
     schema: dataform.projectConfig.vars.OUTPUTS_DATASET,
     tags: ["custom", "events", "outputs"],
     description: "An enriched version of the ga4_events table with a custom session channel grouping.",
+    dependencies: ["ga4_events"],
     bigquery: {
         partitionBy: "event_date",
         clusterBy: [ "event_name", "session_id" ]
