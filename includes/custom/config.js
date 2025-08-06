@@ -45,6 +45,7 @@ const customConfig = {
   // included in the `event_params` column.
   // If you have custom definitions, add them here and they will appear in 
   // the `events_params_custom` column.
+  // test
 
   // all custom_ arrays should be in the form:
   // 
