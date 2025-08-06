@@ -1,0 +1,80 @@
+config {
+    type: "table",
+    schema: dataform.projectConfig.vars.OUTPUTS_DATASET,
+    description: "A lean, flattened table of GA4 events with custom attributions",
+    tags: ["custom", "outputs"],
+    dependencies: ["ga4_events_custom_channel_attributions"],
+    bigquery: {
+        partitionBy: {
+            field: "event_date",
+            data_type: "date"
+        },
+        clusterBy: ["custom_session_channel", "event_name"]
+    }
+}
+
+SELECT
+    -- Event and Date Information
+    source.event_date,
+    source.event_name,
+
+    -- Custom Attribution and Traffic Source
+    source.custom_session_channel,
+    source.fixed_traffic_source.source AS session_source,
+    source.fixed_traffic_source.medium AS session_medium,
+    source.fixed_traffic_source.campaign_id AS session_campaign_id,
+    source.fixed_traffic_source.source_platform AS session_source_platform,
+    source.fixed_traffic_source.content AS session_content,
+    source.fixed_traffic_source.term AS session_term,
+
+    -- First User Traffic Source
+    source.first_user_traffic_source.source AS first_user_source,
+    source.first_user_traffic_source.medium AS first_user_medium,
+    source.first_user_traffic_source.campaign_name AS first_user_campaign_name,
+
+    -- User and Session Identifiers
+    source.user_pseudo_id,
+    source.session_id,
+
+    -- Page and Content Information
+    source.page.path AS page_path,
+    source.page.title AS page_title,
+    source.page.referrer AS page_referrer,
+    source.event_params.content_group,
+
+    -- Geographic and Device Information
+    source.geo.country,
+    source.geo.city,
+    source.device.category AS device_category,
+    source.device.web_info.hostname,
+
+    -- Item Details (from the unnested items array)
+    item.item_name,
+    item.price AS item_price,
+    item.quantity AS item_quantity,
+    item.coupon AS item_coupon,
+
+    -- Custom Event Parameters
+    source.event_params_custom.product_group,
+    source.event_params_custom.affiliation,
+    source.event_params_custom.booking_platform,
+    source.event_params_custom.property_id,
+    source.event_params_custom.event_category,
+    source.event_params_custom.event_label,
+    source.event_params_custom.checkout_step,
+    source.event_params_custom.checkout_step_name,
+    source.event_params_custom.item_variant,
+    source.event_params_custom.action,
+    source.event_params_custom.button_text,
+    source.event_params_custom.menu_button_click,
+    source.event_params_custom.room_type,
+    source.event_params_custom.social_link_name,
+    source.event_params_custom.social_link_url,
+
+    -- Standard Event Parameters
+    source.event_params.link_text,
+    source.event_params.link_url
+
+FROM
+    -- This ref() function tells Dataform to run this model AFTER the custom attribution table is built.
+    ${ref("ga4_events_custom_channel_attributions")} AS source
