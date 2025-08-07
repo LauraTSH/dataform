@@ -68,7 +68,7 @@ SELECT
 
     -- Landing Page details
     COUNTIF(landing_page_location IS NOT NULL) AS landing_page_location_count,
-    COUNTIF(landing_page_path_from_session IS NOT NULL) AS landing_page_path_from_session_count,
+    COUNTIF(landing_page_path IS NOT NULL) AS landing_page_path_from_session_count,
     COUNTIF(landing_page_hostname IS NOT NULL) AS landing_page_hostname_count
 
 FROM
