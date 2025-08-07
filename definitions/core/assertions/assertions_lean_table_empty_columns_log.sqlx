@@ -1,0 +1,99 @@
+-- This config block defines a new table that will store the names of any fully null columns.
+config {
+    type: "table",
+    schema: dataform.projectConfig.vars.QUALITY_DATASET, -- A good place for data quality results
+    description: "Logs the names of columns from the lean_ga4_events_table that are completely NULL over the last 30 days.",
+    tags: ["custom", "quality", "monitoring"]
+}
+
+-- Step 1: Calculate the non-null counts for all columns in a single, efficient pass.
+WITH counts AS (
+  SELECT
+    -- Core Identifiers
+    COUNT(user_pseudo_id) AS user_pseudo_id,
+    COUNT(session_id) AS session_id,
+    COUNT(event_name) AS event_name,
+    COUNT(event_date) AS event_date,
+
+    -- Custom Attribution and Traffic Source
+    COUNT(custom_session_channel) AS custom_session_channel,
+    COUNT(session_source) AS session_source,
+    COUNT(session_medium) AS session_medium,
+    COUNT(session_campaign_id) AS session_campaign_id,
+    COUNT(session_source_platform) AS session_source_platform,
+    COUNT(session_content) AS session_content,
+    COUNT(session_term) AS session_term,
+    COUNT(first_user_source) AS first_user_source,
+    COUNT(first_user_medium) AS first_user_medium,
+    COUNT(first_user_campaign_name) AS first_user_campaign_name,
+
+    -- Page and Content Information
+    COUNT(page_path) AS page_path,
+    COUNT(page_title) AS page_title,
+    COUNT(page_referrer) AS page_referrer,
+    COUNT(content_group) AS content_group,
+
+    -- Geographic and Device Information
+    COUNT(country) AS country,
+    COUNT(city) AS city,
+    COUNT(device_category) AS device_category,
+    COUNT(hostname) AS hostname,
+
+    -- Item Details
+    COUNT(item_name) AS item_name,
+    COUNT(item_price) AS item_price,
+    COUNT(item_quantity) AS item_quantity,
+    COUNT(item_coupon) AS item_coupon,
+
+    -- Custom Event Parameters
+    COUNT(product_group) AS product_group,
+    COUNT(affiliation) AS affiliation,
+    COUNT(booking_platform) AS booking_platform,
+    COUNT(property_id) AS property_id,
+    COUNT(event_category) AS event_category,
+    COUNT(event_label) AS event_label,
+    COUNT(checkout_step) AS checkout_step,
+    COUNT(checkout_step_name) AS checkout_step_name,
+    COUNT(item_variant) AS item_variant,
+    COUNT(action) AS action,
+    COUNT(button_text) AS button_text,
+    COUNT(menu_button_click) AS menu_button_click,
+    COUNT(room_type) AS room_type,
+    COUNT(social_link_name) AS social_link_name,
+    COUNT(social_link_url) AS social_link_url,
+
+    -- Standard Event Parameters
+    COUNT(link_text) AS link_text,
+    COUNT(link_url) AS link_url,
+
+    -- Landing Page details
+    COUNT(landing_page_location) AS landing_page_location,
+    COUNT(landing_page_path) AS landing_page_path_from_session,
+    COUNT(landing_page_hostname) AS landing_page_hostname
+
+  FROM
+    ${ref("lean_ga4_events_table")}
+  WHERE
+    -- Limit the scan to a recent period to keep the query fast and relevant.
+    event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+),
+
+-- Step 2: Unpivot the single row of counts into a tall table of (column_name, non_null_count).
+-- We do this by converting the row to a JSON string and then processing the key-value pairs.
+unpivoted_counts AS (
+  SELECT
+    REPLACE(SPLIT(pair, ':')[OFFSET(0)], '"', '') as column_name,
+    CAST(REPLACE(SPLIT(pair, ':')[OFFSET(1)], '"', '') AS INT64) as non_null_count
+  FROM
+    counts,
+    UNNEST(SPLIT(REGEXP_REPLACE(TO_JSON_STRING(counts), r'{|}', ''))) AS pair
+)
+
+-- Step 3: Filter for and select the names of the columns that have zero non-null values.
+SELECT
+  column_name,
+  CURRENT_TIMESTAMP() as check_timestamp
+FROM
+  unpivoted_counts
+WHERE
+  non_null_count = 0
