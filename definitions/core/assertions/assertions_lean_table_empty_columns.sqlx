@@ -1,0 +1,78 @@
+-- This config block defines this as an "assertion", a special Dataform action for data quality tests.
+-- It will run after the lean_ga4_events_table is built.
+config {
+    type: "assertion",
+    description: "Checks if any columns in the lean_ga4_events_table are completely NULL over the last 30 days.",
+    tags: ["custom", "assertion", "quality"]
+}
+
+-- The main query selects the count of non-null values for each column.
+-- If any of these counts are 0, the assertion will fail, alerting you to the empty column.
+SELECT
+    -- Core Identifiers
+    COUNTIF(user_pseudo_id IS NOT NULL) AS user_pseudo_id_count,
+    COUNTIF(session_id IS NOT NULL) AS session_id_count,
+    COUNTIF(event_name IS NOT NULL) AS event_name_count,
+    COUNTIF(event_date IS NOT NULL) AS event_date_count,
+
+    -- Custom Attribution and Traffic Source
+    COUNTIF(custom_session_channel IS NOT NULL) AS custom_session_channel_count,
+    COUNTIF(session_source IS NOT NULL) AS session_source_count,
+    COUNTIF(session_medium IS NOT NULL) AS session_medium_count,
+    COUNTIF(session_campaign_id IS NOT NULL) AS session_campaign_id_count,
+    COUNTIF(session_source_platform IS NOT NULL) AS session_source_platform_count,
+    COUNTIF(session_content IS NOT NULL) AS session_content_count,
+    COUNTIF(session_term IS NOT NULL) AS session_term_count,
+    COUNTIF(first_user_source IS NOT NULL) AS first_user_source_count,
+    COUNTIF(first_user_medium IS NOT NULL) AS first_user_medium_count,
+    COUNTIF(first_user_campaign_name IS NOT NULL) AS first_user_campaign_name_count,
+
+    -- Page and Content Information
+    COUNTIF(page_path IS NOT NULL) AS page_path_count,
+    COUNTIF(page_title IS NOT NULL) AS page_title_count,
+    COUNTIF(page_referrer IS NOT NULL) AS page_referrer_count,
+    COUNTIF(content_group IS NOT NULL) AS content_group_count,
+
+    -- Geographic and Device Information
+    COUNTIF(country IS NOT NULL) AS country_count,
+    COUNTIF(city IS NOT NULL) AS city_count,
+    COUNTIF(device_category IS NOT NULL) AS device_category_count,
+    COUNTIF(hostname IS NOT NULL) AS hostname_count,
+
+    -- Item Details
+    COUNTIF(item_name IS NOT NULL) AS item_name_count,
+    COUNTIF(item_price IS NOT NULL) AS item_price_count,
+    COUNTIF(item_quantity IS NOT NULL) AS item_quantity_count,
+    COUNTIF(item_coupon IS NOT NULL) AS item_coupon_count,
+
+    -- Custom Event Parameters
+    COUNTIF(product_group IS NOT NULL) AS product_group_count,
+    COUNTIF(affiliation IS NOT NULL) AS affiliation_count,
+    COUNTIF(booking_platform IS NOT NULL) AS booking_platform_count,
+    COUNTIF(property_id IS NOT NULL) AS property_id_count,
+    COUNTIF(event_category IS NOT NULL) AS event_category_count,
+    COUNTIF(event_label IS NOT NULL) AS event_label_count,
+    COUNTIF(checkout_step IS NOT NULL) AS checkout_step_count,
+    COUNTIF(checkout_step_name IS NOT NULL) AS checkout_step_name_count,
+    COUNTIF(item_variant IS NOT NULL) AS item_variant_count,
+    COUNTIF(action IS NOT NULL) AS action_count,
+    COUNTIF(button_text IS NOT NULL) AS button_text_count,
+    COUNTIF(menu_button_click IS NOT NULL) AS menu_button_click_count,
+    COUNTIF(room_type IS NOT NULL) AS room_type_count,
+    COUNTIF(social_link_name IS NOT NULL) AS social_link_name_count,
+    COUNTIF(social_link_url IS NOT NULL) AS social_link_url_count,
+
+    -- Standard Event Parameters
+    COUNTIF(link_text IS NOT NULL) AS link_text_count,
+    COUNTIF(link_url IS NOT NULL) AS link_url_count,
+
+    -- Landing Page details
+    COUNTIF(landing_page_location IS NOT NULL) AS landing_page_location_count,
+    COUNTIF(landing_page_path_from_session IS NOT NULL) AS landing_page_path_from_session_count,
+    COUNTIF(landing_page_hostname IS NOT NULL) AS landing_page_hostname_count
+
+FROM
+    ${ref("ga4_lean")}
+WHERE
+    -- Limit the scan to the last 30 days to keep the query fast and cost-effective.
+    event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
