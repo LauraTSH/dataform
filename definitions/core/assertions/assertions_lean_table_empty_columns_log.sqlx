@@ -72,7 +72,7 @@ WITH counts AS (
     COUNT(landing_page_hostname) AS landing_page_hostname
 
   FROM
-    ${ref("lean_ga4_events_table")}
+    ${ref("ga4_lean")}
   WHERE
     -- Limit the scan to a recent period to keep the query fast and relevant.
     event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
